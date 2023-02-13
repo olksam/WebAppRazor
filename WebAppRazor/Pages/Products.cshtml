@@ -1,0 +1,9 @@
+﻿@page
+@model WebAppRazor.Pages.ProductsModel
+
+@if (!Model.Products.Any()) {
+    <h3>No data</h3>
+} else {
+    <h3>Products</h3>
+    <table-view items=@Model.Products.ToList() details-link-template="products/{Id}"/>
+}

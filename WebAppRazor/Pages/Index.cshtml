@@ -1,0 +1,16 @@
+﻿@page
+@using WebAppRazor.Models;
+@using WebAppRazor.TagHelpers;
+@model IndexModel
+@{
+    ViewData["Title"] = "Home page";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Welcome</h1>
+    <input-form 
+        model=@typeof(Product) 
+        action-url="/products"
+        method=@InputFormMethod.Post 
+     />
+</div>
