@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 
 using WebAppMvc.Data;
+using WebAppMvc.Filters;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<WebAppMvcContext>(options =>
@@ -11,7 +12,7 @@ builder.Services.AddDbContext<WebAppMvcContext>(options =>
     );
 
 // Add services to the container.
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllersWithViews(o => o.Filters.Add(typeof (GlobalExceptionFilter)));
 
 var app = builder.Build();
 

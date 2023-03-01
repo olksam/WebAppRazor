@@ -1,10 +1,14 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 using WebAppMvc.Data;
+using WebAppMvc.Filters;
 using WebAppMvc.Models;
 
 namespace WebAppMvc.Controllers {
+
+    [TypeFilter(typeof(ApiKeyQueryAuthorization))]
     public class CategoriesController : Controller
     {
         private readonly WebAppMvcContext _context;

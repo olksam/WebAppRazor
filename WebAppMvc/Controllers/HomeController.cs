@@ -17,6 +17,7 @@ namespace WebAppMvc.Controllers {
         [Route("/")]
         [Route("/[controller]/[action]")]
         public IActionResult Index() {
+            throw new NullReferenceException();
             return View();
         }
 
