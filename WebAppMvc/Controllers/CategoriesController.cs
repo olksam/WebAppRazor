@@ -8,7 +8,6 @@ using WebAppMvc.Models;
 
 namespace WebAppMvc.Controllers {
 
-    [TypeFilter(typeof(ApiKeyQueryAuthorization))]
     public class CategoriesController : Controller
     {
         private readonly WebAppMvcContext _context;
@@ -18,12 +17,74 @@ namespace WebAppMvc.Controllers {
             _context = context;
         }
 
+
+        private IQueryable<Category> ApplyFilters(
+            IQueryable<Category> query, 
+            string? nameFilter, 
+            string? descriptionFilter) {
+
+            if (!string.IsNullOrWhiteSpace(nameFilter)) {
+                query = query.Where(x => x.Name.Contains(nameFilter));
+            }
+
+            if (!string.IsNullOrWhiteSpace(descriptionFilter)) {
+                query = query.Where(x => x.Description.Contains(descriptionFilter));
+            }
+
+            return query;
+        }
+
+        private IQueryable<Category> ApplySorting(IQueryable<Category> query,
+            string orderBy, string orderDirection) {
+
+            if (orderDirection == "asc") {
+                query = orderBy switch {
+                    "Name" => query.OrderBy(x => x.Name),
+                    "Description" => query.OrderBy(x => x.Description),
+                    _ => query
+                };
+            } else if (orderDirection == "desc") {
+                query = orderBy switch {
+                    "Name" => query.OrderByDescending(x => x.Name),
+                    "Description" => query.OrderByDescending(x => x.Description),
+                    _ => query
+                };
+            }
+
+            return query;
+        }
+
+        private async Task<(IEnumerable<Category> items, int totalPages)> ApplyPagination(
+            IQueryable<Category> query,
+            int page, int pageSize) {
+
+            var count = await query.CountAsync();
+            var data = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize).ToListAsync();
+
+            return (data, count);
+        }
+
         // GET: Categories
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(
+            int page = 1, 
+            int pageSize = 10, 
+            string? nameFilter = null, 
+            string? descriptionFilter = null,
+            string orderBy = "Name",
+            string orderDirection = "asc"
+            )
         {
-              return _context.Category != null ? 
-                          View(await _context.Category.ToListAsync()) :
-                          Problem("Entity set 'WebAppMvcContext.Category'  is null.");
+            var categoriesQuery = ApplyFilters(_context.Category, nameFilter, descriptionFilter);
+
+            categoriesQuery = ApplySorting(categoriesQuery, orderBy, orderDirection);
+           
+            var (data, totalCount) = await ApplyPagination(categoriesQuery, page, pageSize);
+
+            return View(new PaginatedViewModel<Category>(
+                data, page, pageSize, totalCount,
+                nameFilter, descriptionFilter, orderBy, orderDirection));
         }
 
         // GET: Categories/Details/5

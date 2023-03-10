@@ -1,15 +1,23 @@
+using System.Reflection;
+
 using Microsoft.EntityFrameworkCore;
 
 using WebAppMvc.Data;
 using WebAppMvc.Filters;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddDbContext<WebAppMvcContext>(options =>
-    //options.UseSqlServer(builder.Configuration.GetConnectionString("WebAppMvcContext") 
-    //?? throw new InvalidOperationException("Connection string 'WebAppMvcContext' not found."))
-    options.UseInMemoryDatabase("tempdb")
+builder.Services.AddDbContext<WebAppMvcContext>(options => {
+    options.UseSqlServer(builder.Configuration.GetConnectionString("WebAppMvcContext"), settings => {
+       // settings.CommandTimeout(30);
+      //  settings.MigrationsHistoryTable("MY_TABLE_MIGRATIONS");
+       // settings.MigrationsAssembly(Assembly.GetExecutingAssembly().FullName);
+    });
+});
 
-    );
+// Domain
+// Infrastructure
+// BusinessLogic
+// Web <-
 
 // Add services to the container.
 builder.Services.AddControllersWithViews(o => o.Filters.Add(typeof (GlobalExceptionFilter)));
