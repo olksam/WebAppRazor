@@ -6,6 +6,7 @@ namespace WebApi.DTOs {
         /// New todo item's text.
         /// </summary>
         [Required]
+        [MinLength(5)]
         public string Text { get; set; } = string.Empty;
     }
 }

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 using Swashbuckle.AspNetCore.Annotations;
 
@@ -9,6 +10,7 @@ using WebApi.Services;
 
 namespace WebApi.Controllers;
 
+[Authorize(Roles = "admin")]
 [Route("api/[controller]")]
 [ApiController]
 public class TodoController : ControllerBase {
