@@ -13,7 +13,7 @@ namespace WebApi.Controllers {
     [Route("api/[controller]")]
     public class TestController : ControllerBase {
 
-        [Authorize(Roles = "moderator")]
+        [Authorize]
         [HttpGet("test")]
         public async Task<ActionResult> Test() {
             return Ok("It works!");

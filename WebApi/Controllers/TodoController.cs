@@ -10,7 +10,7 @@ using WebApi.Services;
 
 namespace WebApi.Controllers;
 
-[Authorize(Roles = "admin")]
+[Authorize]
 [Route("api/[controller]")]
 [ApiController]
 public class TodoController : ControllerBase {

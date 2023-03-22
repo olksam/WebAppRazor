@@ -1,43 +1,96 @@
-﻿using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-
+﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.Tokens;
+using Microsoft.EntityFrameworkCore;
 
+using WebApi.Auth;
 using WebApi.DTOs.Auth;
+using WebApi.Entities;
 
 namespace WebApi.Controllers {
-
     [ApiController]
     [Route("api/[controller]")]
     public class AuthController : ControllerBase {
+        private readonly UserManager<AppUser> _userManager;
+        private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly SignInManager<AppUser> _signInManager;
+        private readonly IJwtService _jwtService;
+
+        public AuthController(
+            UserManager<AppUser> userManager,
+            RoleManager<IdentityRole> roleManager,
+            SignInManager<AppUser> signInManager,
+            IJwtService jwtService) {
+            _userManager = userManager;
+            _roleManager = roleManager;
+            _signInManager = signInManager;
+            _jwtService = jwtService;
+        }
+
+        private async Task<AuthTokenDto> GenerateToken(AppUser user) {
+            var roles = await _userManager.GetRolesAsync(user);
+            var claims = await _userManager.GetClaimsAsync(user);
+
+            var accessToken = _jwtService.GenerateSecurityToken(user.Email, roles, claims);
+
+            var refreshToken = Guid.NewGuid().ToString("N").ToLower();
+
+            user.RefreshToken = refreshToken;
+            await _userManager.UpdateAsync(user);
+
+            return new AuthTokenDto {
+                AccessToken = accessToken,
+                RefreshToken = refreshToken,
+            };
+        }
+
+        [HttpPost("register")]
+        public async Task<ActionResult<AuthTokenDto>> Register(RegisterRequest request) {
+            var existingUser = await _userManager.FindByNameAsync(request.Email);
+
+            if (existingUser is not null) {
+                return Conflict("User already exists");
+            }
+
+            var user = new AppUser {
+                UserName = request.Email,
+                Email = request.Email,
+                RefreshToken = Guid.NewGuid().ToString("N").ToLower()
+            };
+
+            var result = await _userManager.CreateAsync(user, request.Password);
+
+            if (!result.Succeeded) {
+                return BadRequest(result.Errors);
+            }
+
+            return await GenerateToken(user);
+        }
 
         [HttpPost("login")]
         public async Task<ActionResult<AuthTokenDto>> Login([FromBody] LoginRequest request) {
-            if (request is not {Login: "admin", Password: "pass123" }) {
+            var user = await _userManager.FindByNameAsync(request.Email);
+            if (user is null) {
                 return Unauthorized();
             }
 
-            var claims = new[] {
-                new Claim(ClaimsIdentity.DefaultNameClaimType, "admin"),
-                new Claim(ClaimsIdentity.DefaultRoleClaimType, "admin")
-            };
+            var canSignIn = await _signInManager.CheckPasswordSignInAsync(user, request.Password, false);
 
-            var key = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes("super secret key"));
-            var signingCredentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+            if (!canSignIn.Succeeded) {
+                return Unauthorized();
+            }
 
-            var token = new JwtSecurityToken(
-                issuer: "http://localhost:5000",
-                audience: "http://localhost:5000",
-                expires: DateTime.UtcNow.AddHours(1),
-                signingCredentials: signingCredentials,
-                claims: claims);
+            return await GenerateToken(user);
+        }
 
-            var tokenValue = new JwtSecurityTokenHandler().WriteToken(token);
+        [HttpPost("refresh")]
+        public async Task<ActionResult<AuthTokenDto>> RefreshToken([FromBody] RefreshTokenRequest request) {
+            var user = await _userManager.Users.FirstOrDefaultAsync(e => e.RefreshToken == request.RefreshToken);
 
-            return new AuthTokenDto {
-                Token = tokenValue
-            };
+            if (user is null) {
+                return Unauthorized();
+            }
+
+            return await GenerateToken(user);
         }
     }
 }

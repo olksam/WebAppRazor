@@ -1,7 +1,5 @@
 ﻿namespace WebApi.DTOs.Auth;
 
-public class AuthTokenDto {
-    public string AccessToken { get; set; } 
+public class RefreshTokenRequest {
     public string RefreshToken { get; set; }
-
 }
