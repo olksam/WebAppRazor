@@ -1,7 +1,11 @@
+using FluentValidation;
+using FluentValidation.AspNetCore;
+
 using Microsoft.EntityFrameworkCore;
 
 using WebApi;
 using WebApi.Data;
+using WebApi.DTOs.Validation;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,6 +16,7 @@ builder.Services.AddDbContext<TodoDbContext>(options => {
 
 builder.Services.AddControllers();
 
+
 builder.Services.AddAuthenticationAndAuthorization(builder.Configuration);
 
 builder.Services.AddEndpointsApiExplorer();
@@ -19,6 +24,9 @@ builder.Services.AddSwagger();
 
 builder.Services.AddDomainDependencies();
 
+
+builder.Services.AddFluentValidationAutoValidation();
+builder.Services.AddValidatorsFromAssemblyContaining<RegisterRequestValidator>();
 
 
 var app = builder.Build();
@@ -43,7 +51,6 @@ app.MapControllers();
 app.Run();
 
 /*
-
  + Authn/Authz -> Identity, JWT -> Policies, Identity, RefreshToken
  - Validation -> FluentValidation
  - Logging -> Serilog
