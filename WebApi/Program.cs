@@ -35,6 +35,13 @@ builder.Services.AddDbContext<TodoDbContext>(options => {
     options.UseSqlServer(builder.Configuration.GetConnectionString("TodoDbConnectionString"));
 });
 
+//builder.Services.AddOutputCache();
+builder.Services.AddMemoryCache(); // singleton
+
+//builder.Services.AddDistributedMemoryCache(s => {
+//    
+//});
+
 builder.Services.AddControllers();
 
 builder.Services.AddAuthenticationAndAuthorization(builder.Configuration);
@@ -56,6 +63,10 @@ if (app.Environment.IsDevelopment()) {
     app.UseSwaggerUI();
 }
 
+//app.UseOutputCache();
+app.UseResponseCaching();
+
+app.UseSerilogRequestLogging();
 
 app.UseHttpsRedirection();
 
@@ -80,9 +91,15 @@ app.Run();
 /*
  + Authn/Authz -> Identity, JWT -> Policies, Identity, RefreshToken
  + Validation -> FluentValidation
- - Logging -> Microsoft.Extensions.Logging, Serilog
- - Caching -> Memory Cache
+ + Logging -> Microsoft.Extensions.Logging, Serilog
+ + Caching -> Memory Cache
  - Cron jobs -> Quartz.NET
  - Testing -> xUnit, Moq
  - Secret Management -> GitHub Secrets
 */
+
+
+// GET /api/orders
+
+// cache
+// -> 200 - [{}, {}, {}]
