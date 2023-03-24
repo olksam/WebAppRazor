@@ -42,8 +42,8 @@ namespace WebApi.DTOs.Validation {
         public RegisterRequestValidator()
         {
             RuleFor(e => e.Email).EmailAddress().NotEmpty();
-            RuleFor(e => e.Password).Password(mustContainDigit: false).NotEmpty();
-            //RuleFor(e => e.Password).Must(SharedValidators.BeValidPassword).NotEmpty();
+           // RuleFor(e => e.Password).Password(mustContainDigit: false).NotEmpty();
+            RuleFor(e => e.Password).Must(SharedValidators.BeValidPassword).NotEmpty();
         }
 
         //private bool BeValidPassword(string password) {

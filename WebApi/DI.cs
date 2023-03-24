@@ -14,7 +14,9 @@ using WebApi.Services;
 
 namespace WebApi {
     public static class DI {
-        public static IServiceCollection AddSwagger(this IServiceCollection services) {
+        public static IServiceCollection AddSwagger(this IServiceCollection services) { 
+            services.AddEndpointsApiExplorer();
+
             services.AddSwaggerGen(setup => {
                 setup.SwaggerDoc("v1",
                     new OpenApiInfo {
@@ -98,6 +100,13 @@ namespace WebApi {
 
         public static IServiceCollection AddDomainDependencies(this IServiceCollection services) {
             services.AddScoped<ITodoService, TodoService>();
+
+            return services;
+        }
+
+
+        public static IServiceCollection AddLogging(this IServiceCollection services, IConfiguration configuration) {
+            services.AddLogging();
 
             return services;
         }

@@ -3,12 +3,33 @@ using FluentValidation.AspNetCore;
 
 using Microsoft.EntityFrameworkCore;
 
+using Serilog;
+using Serilog.Events;
+
 using WebApi;
 using WebApi.Data;
 using WebApi.DTOs.Validation;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var outputTemplate = "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}Environment: {Environment}{NewLine}{Exception}";
+
+Log.Logger = new LoggerConfiguration()
+                .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
+                .MinimumLevel.Debug()
+                .Enrich.WithThreadName()
+                .Enrich.WithProperty("Environment", builder.Environment.EnvironmentName)
+                .WriteTo.Console(outputTemplate: outputTemplate)
+                //.WriteTo.File("logs/myapp.txt", 
+                //    rollingInterval: RollingInterval.Day,
+                //    outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}ThreadId: {ThreadId}{NewLine}{Exception}")
+                .CreateLogger();
+
+//Log.Logger = new LoggerConfiguration()
+//    .ReadFrom.Configuration(builder.Configuration)
+//    .CreateLogger();
+
+builder.Host.UseSerilog();
 
 builder.Services.AddDbContext<TodoDbContext>(options => {
     options.UseSqlServer(builder.Configuration.GetConnectionString("TodoDbConnectionString"));
@@ -16,10 +37,8 @@ builder.Services.AddDbContext<TodoDbContext>(options => {
 
 builder.Services.AddControllers();
 
-
 builder.Services.AddAuthenticationAndAuthorization(builder.Configuration);
-
-builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddLogging(builder.Configuration);
 builder.Services.AddSwagger();
 
 builder.Services.AddDomainDependencies();
@@ -50,10 +69,18 @@ app.MapControllers();
 
 app.Run();
 
+
+// Application Insights
+// MSSQL
+// MongoDB
+// Console
+// File
+// ElasticSearch
+
 /*
  + Authn/Authz -> Identity, JWT -> Policies, Identity, RefreshToken
- - Validation -> FluentValidation
- - Logging -> Serilog
+ + Validation -> FluentValidation
+ - Logging -> Microsoft.Extensions.Logging, Serilog
  - Caching -> Memory Cache
  - Cron jobs -> Quartz.NET
  - Testing -> xUnit, Moq
