@@ -30,7 +30,7 @@ namespace WebApi.Controllers {
             var roles = await _userManager.GetRolesAsync(user);
             var claims = await _userManager.GetClaimsAsync(user);
 
-            var accessToken = _jwtService.GenerateSecurityToken(user.Email, roles, claims);
+            var accessToken = _jwtService.GenerateSecurityToken(user.Id, user.Email!, roles, claims);
 
             var refreshToken = Guid.NewGuid().ToString("N").ToLower();
 

@@ -3,12 +3,15 @@ using FluentValidation.AspNetCore;
 
 using Microsoft.EntityFrameworkCore;
 
+using Quartz;
+
 using Serilog;
 using Serilog.Events;
 
 using WebApi;
 using WebApi.Data;
 using WebApi.DTOs.Validation;
+using WebApi.HostedServices;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -54,13 +57,27 @@ builder.Services.AddDomainDependencies();
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<RegisterRequestValidator>();
 
+//builder.Services.AddHostedService<DatabaseCleanupJob>();
+//builder.Services.AddHostedService<TransactionProcessorJob>();
+//builder.Services.AddHostedService<ResetTransactionStatusBackgroundService>();
+builder.Services.AddSingleton<MessageQueue>();
+
+builder.Services.AddQuartz(q => {
+    q.ScheduleJob<DatabaseCleanupCronJob>(trigger => trigger.WithCronSchedule("*/30 */10 12 30 * *"));
+});
+
+// ASP.NET Core hosting
+builder.Services.AddQuartzServer(options => {
+    // when shutting down we want jobs to complete gracefully
+    options.WaitForJobsToComplete = true;
+});
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment()) {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(e => e.EnablePersistAuthorization());
 }
 
 //app.UseOutputCache();
@@ -93,7 +110,7 @@ app.Run();
  + Validation -> FluentValidation
  + Logging -> Microsoft.Extensions.Logging, Serilog
  + Caching -> Memory Cache
- - Cron jobs -> Quartz.NET
+ + Cron jobs -> Quartz.NET, BackgroundWorker, IHostedService // Hangfire, Coravel
  - Testing -> xUnit, Moq
  - Secret Management -> GitHub Secrets
 */

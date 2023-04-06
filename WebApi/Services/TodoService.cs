@@ -3,7 +3,7 @@
 using WebApi.Data;
 using WebApi.DTOs;
 using WebApi.DTOs.Pagination;
-using WebApi.Models;
+using WebApi.Entities;
 
 namespace WebApi.Services
 {
@@ -14,8 +14,8 @@ namespace WebApi.Services
             _context = context;
         }
 
-        public async Task<TodoItemDto?> ChangeTodoItemStatus(int id, bool isCompleted) {
-            var item = await _context.TodoItems.FindAsync(id);
+        public async Task<TodoItemDto?> ChangeTodoItemStatus(string userId, int id, bool isCompleted) {
+            var item = await _context.TodoItems.FirstOrDefaultAsync(e => e.Id == id && e.UserId == userId);
 
             if (item is null) {
                 return null;
@@ -34,14 +34,21 @@ namespace WebApi.Services
             };
         }
 
-        public async Task<TodoItemDto> CreateTodoItem(CreateTodoItemRequest request) {
+        public async Task<TodoItemDto> CreateTodoItem(string userId, CreateTodoItemRequest request) {
+            var user = await _context.Users.FindAsync(userId);
+            if (user is null) {
+                throw new KeyNotFoundException();
+            }
+
+
             var now = DateTimeOffset.UtcNow;
 
             var item = new TodoItem {
                 Text = request.Text,
                 CreatedAt = now,
                 UpdatedAt = now,
-                IsCompleted = false
+                IsCompleted = false,
+                UserId = userId
             };
 
             item = _context.TodoItems.Add(item).Entity;
@@ -56,8 +63,8 @@ namespace WebApi.Services
             };
         }
 
-        public async Task<TodoItemDto?> GetTodoItem(int id) {
-            var entity = await _context.TodoItems.FindAsync(id);
+        public async Task<TodoItemDto?> GetTodoItem(string userId, int id) {
+            var entity = await _context.TodoItems.FirstOrDefaultAsync(e => e.Id == id && e.UserId == userId);
 
             return entity != null
                 ? new TodoItemDto {
@@ -68,8 +75,8 @@ namespace WebApi.Services
                 } : null;
         }
 
-        public async Task<PaginatedListDto<TodoItemDto>> GetTodoItems(int page, int pageSize, string? search, bool? isCompleted) {
-            IQueryable<TodoItem> query = _context.TodoItems;
+        public async Task<PaginatedListDto<TodoItemDto>> GetTodoItems(string userId, int page, int pageSize, string? search, bool? isCompleted) {
+            IQueryable<TodoItem> query = _context.TodoItems.Where(e => e.UserId == userId);
 
             if (!string.IsNullOrWhiteSpace(search)) {
                 query = query.Where(e => e.Text.Contains(search));

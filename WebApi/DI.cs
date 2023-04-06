@@ -11,6 +11,7 @@ using WebApi.Data;
 
 using WebApi.Entities;
 using WebApi.Services;
+using WebApi.Providers;
 
 namespace WebApi {
     public static class DI {
@@ -59,6 +60,8 @@ namespace WebApi {
         public static IServiceCollection AddAuthenticationAndAuthorization(
             this IServiceCollection services,
             IConfiguration configuration) {
+
+            services.AddScoped<IRequestUserProvider, RequestUserProvider>();
 
             services.AddIdentity<AppUser, IdentityRole>(setup => {
 

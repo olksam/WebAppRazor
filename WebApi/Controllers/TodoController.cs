@@ -5,7 +5,7 @@ using Swashbuckle.AspNetCore.Annotations;
 
 using WebApi.DTOs;
 using WebApi.DTOs.Pagination;
-using WebApi.Models;
+using WebApi.Providers;
 using WebApi.Services;
 
 namespace WebApi.Controllers;
@@ -15,9 +15,28 @@ namespace WebApi.Controllers;
 [ApiController]
 public class TodoController : ControllerBase {
     private readonly ITodoService _todoService;
+    private readonly IRequestUserProvider _userProvider;
 
-    public TodoController(ITodoService todoService) {
+    public TodoController(
+        ITodoService todoService, 
+        IRequestUserProvider userProvider) {
         _todoService = todoService;
+        _userProvider = userProvider;
+    }
+
+    [Authorize(Roles = "admin")]
+    [HttpGet("/api/users/{userId}/[controller]")]
+    public async Task<ActionResult<PaginatedListDto<TodoItemDto>>> GetUserList(
+        [FromQuery] TodoQueryFilters filters, // search, completed
+        [FromQuery] PaginationRequest pagination, // page, pageSize
+        string userId) { 
+
+        return await _todoService.GetTodoItems(
+            userId,
+            pagination.Page,
+            pagination.PageSize,
+            filters.Search,
+            filters.Completed);
     }
 
     // GET: api/<TodoController>
@@ -26,7 +45,11 @@ public class TodoController : ControllerBase {
         [FromQuery] TodoQueryFilters filters, // search, completed
         [FromQuery] PaginationRequest pagination) { // page, pageSize
 
+        var user = _userProvider.GetUserInfo();
+
+
         return await _todoService.GetTodoItems(
+            user.Id,
             pagination.Page, 
             pagination.PageSize, 
             filters.Search, 
@@ -36,7 +59,9 @@ public class TodoController : ControllerBase {
     // GET api/<TodoController>/5
     [HttpGet("{id}")]
     public async Task<ActionResult<TodoItemDto>> Get(int id) {
-        var item = await _todoService.GetTodoItem(id);
+        var user = _userProvider.GetUserInfo();
+
+        var item = await _todoService.GetTodoItem(user.Id, id);
 
         return item != null
             ? item // -> Ok(item)
@@ -52,7 +77,9 @@ public class TodoController : ControllerBase {
     /// <response code="403">Forbidden</response>
     [HttpPost]
     public async Task<ActionResult<TodoItemDto>> Create([FromBody] CreateTodoItemRequest request) {
-        var createdItem = await _todoService.CreateTodoItem(request);
+        var user = _userProvider.GetUserInfo();
+
+        var createdItem = await _todoService.CreateTodoItem(user.Id, request);
 
         return CreatedAtAction(nameof(Get), new {id = createdItem.Id}, createdItem);
     }
@@ -60,7 +87,9 @@ public class TodoController : ControllerBase {
     // PATCH api/todo/5/status
     [HttpPatch("{id}/status")]
     public async Task<ActionResult<TodoItemDto>> ChangeStatus(int id, [FromBody] bool isCompleted) {
-        var todoItem = await _todoService.ChangeTodoItemStatus(id, isCompleted);
+        var user = _userProvider.GetUserInfo();
+
+        var todoItem = await _todoService.ChangeTodoItemStatus(user.Id, id, isCompleted);
 
         return todoItem != null
             ? todoItem

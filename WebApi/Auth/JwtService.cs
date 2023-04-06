@@ -14,9 +14,10 @@ namespace WebApi.Auth {
             _config = config;
         }
 
-        public string GenerateSecurityToken(string email, IEnumerable<string> roles, IEnumerable<Claim> userClaims) {
+        public string GenerateSecurityToken(string id, string email, IEnumerable<string> roles, IEnumerable<Claim> userClaims) {
             var claims = new[] {
                 new Claim(ClaimsIdentity.DefaultNameClaimType, email),
+                new Claim("userId", id),
                 new Claim(ClaimsIdentity.DefaultRoleClaimType, string.Join(",", roles))
             }.Concat(userClaims);
 
