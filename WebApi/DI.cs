@@ -103,6 +103,7 @@ namespace WebApi {
 
         public static IServiceCollection AddDomainDependencies(this IServiceCollection services) {
             services.AddScoped<ITodoService, TodoService>();
+            services.AddScoped<IEmailSender, EmailSender>();    
 
             return services;
         }

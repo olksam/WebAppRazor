@@ -9,9 +9,12 @@ namespace WebApi.Services
 {
     public class TodoService : ITodoService {
         private readonly TodoDbContext _context;
+        private readonly IEmailSender _emailSender;
 
-        public TodoService(TodoDbContext context) {
+        public TodoService(TodoDbContext context, IEmailSender emailSender) {
+
             _context = context;
+            _emailSender = emailSender;
         }
 
         public async Task<TodoItemDto?> ChangeTodoItemStatus(string userId, int id, bool isCompleted) {
@@ -54,6 +57,8 @@ namespace WebApi.Services
             item = _context.TodoItems.Add(item).Entity;
 
             await _context.SaveChangesAsync();
+
+            await _emailSender.SendEmail(user.Email!, item.Text, "New todo item!");
 
             return new TodoItemDto {
                 Id = item.Id,

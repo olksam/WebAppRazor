@@ -115,6 +115,13 @@ app.Run();
  - Secret Management -> GitHub Secrets
 */
 
+// unit test, // xUnit, Moq, FluentAssertions
+// functional test,
+// integration test,
+// performance test,
+// load test,
+// security test,
+// regression test
 
 // GET /api/orders
 
